@@ -130,22 +130,30 @@ class PieChart : View {
 
   private fun init() {
     animator = ValueAnimator.ofFloat(0F, 1F)
-    animator.duration = 1000
+    animator.duration = 10000
     animator.interpolator = LinearInterpolator()
     animator.addUpdateListener {
-      ratio = it.animatedValue as Float
       val t = it.currentPlayTime / it.duration.toFloat()
+      ratio = EasingUtils(0F, 1F).ratio(t).let { ratio ->
+        EasingUtils.easeInOutCubic(ratio)
+      }
 
       if (t in 0.2F..0.5F) {
-        barRatio[0] = EasingUtils(0.2F, 0.5F).ratio(t)
+        barRatio[0] = EasingUtils(0.2F, 0.5F).ratio(t).let { ratio ->
+          EasingUtils.easeInOutQuint(ratio)
+        }
       }
 
       if (t in 0.4F..0.7F) {
-        barRatio[1] = EasingUtils(0.4F, 0.7F).ratio(t)
+        barRatio[1] = EasingUtils(0.4F, 0.7F).ratio(t).let { ratio ->
+          EasingUtils.easeInOutQuad(ratio)
+        }
       }
 
       if (t in 0.6F..0.9F) {
-        barRatio[2] = EasingUtils(0.6F, 0.9F).ratio(t)
+        barRatio[2] = EasingUtils(0.6F, 0.9F).ratio(t).let { ratio ->
+          EasingUtils.easeInOutQuart(ratio)
+        }
       }
 
       if (t in 0.4F..0.6F) {
