@@ -102,13 +102,18 @@ class PieChart : View {
       canvas?.drawText(value.toString(), (startX + endX) / 2, minH - 4.dp, textPaint)
     }
 
-//    values2.forEachIndexed { index, value ->
-//      val left = width - value
-//      val top = 4.dp + (size + horizontalBarPadding) * index
-//      val bottom = top + size
-//      val right = width - paddingLeft + 2.dp
-//      canvas?.drawRect(left, top, right, bottom, horizontalBarPaint)
-//    }
+    values2.forEachIndexed { index, value ->
+      val h = 150F
+      val margin = 20.dp
+      val minH = paddingTop + 2.dp
+      val maxH = h + minH
+      val startY = minH + ((maxH + margin) * index)
+      val stopY = startY + h
+      val startX = width - (paddingLeft + 1.dp)
+      val stopX = barRatio[0] * ((startX - value) - startX) + startX
+
+      canvas?.drawRect(startX, startY, stopX, stopY, horizontalBarPaint)
+    }
   }
 
   fun startAnimation() {
@@ -130,7 +135,7 @@ class PieChart : View {
 
   private fun init() {
     animator = ValueAnimator.ofFloat(0F, 1F)
-    animator.duration = 10000
+    animator.duration = 1000
     animator.interpolator = LinearInterpolator()
     animator.addUpdateListener {
       val t = it.currentPlayTime / it.duration.toFloat()
