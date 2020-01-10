@@ -1,9 +1,8 @@
-package com.example.toy.android
+package com.example.toy.android.chart
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -15,6 +14,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import com.example.toy.android.entity.Bar
 import com.example.toy.android.utils.EasingUtils
+import com.example.toy.android.utils.dp
 
 class BarChart : View {
 
@@ -237,7 +237,4 @@ class BarChart : View {
     }
     paintAnimator.start()
   }
-
-  private val Int.dp: Float
-    get() = this * Resources.getSystem().displayMetrics.density
 }
