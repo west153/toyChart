@@ -17,6 +17,7 @@ class Pie {
     this.color = Color.RED
     this.strokeWidth = 1.dp
     this.style = Paint.Style.FILL
+    this.alpha = 150
   }
 
   val strokePaint

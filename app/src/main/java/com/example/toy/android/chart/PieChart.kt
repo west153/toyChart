@@ -6,10 +6,12 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.animation.LinearInterpolator
 import com.example.toy.android.entity.Pie
 import com.example.toy.android.utils.EasingUtils
+import com.example.toy.android.utils.TimeToValue
 
 class PieChart : View {
 
@@ -29,21 +31,30 @@ class PieChart : View {
   override fun onDraw(canvas: Canvas?) {
     super.onDraw(canvas)
     val left = 0F
-    Int
     val right = height.toFloat()
     val top = 0F
     val bottom = height.toFloat()
     ovalRectF.set(left, top, right, bottom)
 
-    pieList.forEach { pie ->
+    for (index in (pieList.size - 1) downTo 0) {
+      val sweep = if (index == 0)
+        pieList[index].sweepAngle
+      else
+        pieList[index].sweepAngle + (index - index until index).map { pieList[it].sweepAngle }.sum()
+
       canvas?.drawArc(
         ovalRectF,
-        pie.startAngle,
-        pie.sweepAngle * pie.progress,
+        startAngle,
+        sweep * pieList[index].progress,
         true,
-        pie.backgroundPaint
+        pieList[index].backgroundPaint
       )
+
+      if (index == 1) {
+        Log.d("chart", "${pieList[index].progress}, $sweep")
+      }
     }
+
   }
 
   private fun init() {
@@ -51,37 +62,13 @@ class PieChart : View {
     animator.duration = 1000
     animator.interpolator = LinearInterpolator()
     animator.addUpdateListener {
-      val t = it.currentPlayTime / it.duration.toFloat()
-
-      if (t in 0.0F..0.2F) {
-        pieList[0].progress = EasingUtils(0.0F, 0.2F).ratio(t).let { ratio ->
-          EasingUtils.easeInOutCubic(ratio)
-        }
-      }
-
-      if (t in 0.0F..0.4F) {
-        pieList[1].progress = EasingUtils(0.0F, 0.4F).ratio(t).let { ratio ->
-          EasingUtils.easeInOutCubic(ratio)
-        }
-      }
-
-      if (t in 0.0F..0.6F) {
-        pieList[2].progress = EasingUtils(0.0F, 0.6F).ratio(t).let { ratio ->
-          EasingUtils.easeInOutCubic(ratio)
-        }
-      }
-
-      if (t in 0.0F..0.8F) {
-        pieList[3].progress = EasingUtils(0.0F, 0.8F).ratio(t).let { ratio ->
-          EasingUtils.easeInOutCubic(ratio)
-        }
-      }
-
-      if (t in 0.0F..1.0F) {
-        pieList[4].progress = EasingUtils(0.0F, 1.0F).ratio(t).let { ratio ->
-          EasingUtils.easeInOutCubic(ratio)
-        }
-      }
+      val t = it.animatedValue as Float
+      val chartT = EasingUtils.easeInOutCubic(t)
+      pieList[0].progress = TimeToValue(0F, 0.2F, 0F, 1F).easing(chartT)
+      pieList[1].progress = TimeToValue(0F, 0.4F, 0F, 1F).easing(chartT)
+      pieList[2].progress = TimeToValue(0F, 0.6F, 0F, 1F).easing(chartT)
+      pieList[3].progress = TimeToValue(0F, 0.8F, 0F, 1F).easing(chartT)
+      pieList[4].progress = TimeToValue(0F, 1F, 0F, 1F).easing(chartT)
       postInvalidate()
     }
   }
