@@ -1,19 +1,23 @@
 package com.example.toy.android
 
+import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.LinearInterpolator
+import com.example.toy.android.entity.Bar
 import com.example.toy.android.utils.EasingUtils
 
 class PieChart : View {
 
-  var startAngle = 90
   var paddingLeft = 8.dp
   var paddingTop = 2.dp
 
@@ -30,6 +34,8 @@ class PieChart : View {
     this.strokeWidth = 1.dp
   }
 
+  private val verticalBarRectFMap = hashMapOf<Int, Bar>()
+
   private val textPaint = Paint().apply {
     this.color = Color.WHITE
     this.isAntiAlias = true
@@ -43,7 +49,11 @@ class PieChart : View {
   }
 
   private lateinit var animator: ValueAnimator
+  private lateinit var paintAnimator: ValueAnimator
   private var ratio = 0F
+  private var colorFrom = 0
+  private var colorTo = 0
+  private var colorPaint = 0
   private var barRatio = arrayOf(0F, 0F, 0F)
   private var textRatio = arrayOf(0F, 0F, 0F)
 
@@ -89,13 +99,18 @@ class PieChart : View {
       val startX = minW + ((maxW + margin) * index)
       val endX = startX + maxW
 
-      canvas?.drawRect(
-        startX,
-        maxH,
-        endX,
-        barRatio[index] * (minH - maxH) + maxH,
-        verticalBarPaint
-      )
+      val bar = verticalBarRectFMap[index]
+      val rectF = bar?.rectF?.apply {
+        this.set(startX, barRatio[index] * (minH - maxH) + maxH, endX, maxH)
+      } ?: return@forEachIndexed
+
+      if (bar.isSelected != null) {
+        Log.d("colorPaint", "$colorPaint")
+        verticalBarPaint.color = colorPaint
+      } else
+        verticalBarPaint.color = Color.GREEN
+
+      canvas?.drawRect(rectF, verticalBarPaint)
 
       val textAlpha = (255 * textRatio[index]).toInt()
       textPaint.alpha = textAlpha
@@ -119,6 +134,37 @@ class PieChart : View {
   fun startAnimation() {
     clear()
     animator.start()
+  }
+
+  fun touchEvent(x: Float, y: Float): Boolean {
+    val filter = verticalBarRectFMap
+      .values
+      .find { it.rectF.contains(x, y) }
+
+    verticalBarRectFMap
+      .values
+      .forEach {
+        if (it == filter) {
+          val selected = it.isSelected != true
+          it.isSelected = selected
+          if (selected) {
+            colorFrom = Color.GREEN
+            colorTo = Color.BLUE
+          } else {
+            colorFrom = Color.BLUE
+            colorTo = Color.GREEN
+          }
+        } else
+          it.isSelected = null
+      }
+
+    return when (filter) {
+      null -> false
+      else -> {
+        startColorAnimation()
+        true
+      }
+    }
   }
 
   private fun clear() {
@@ -174,6 +220,22 @@ class PieChart : View {
       }
       postInvalidate()
     }
+
+
+    values.forEachIndexed { index, _ ->
+      verticalBarRectFMap[index] = Bar(RectF())
+    }
+  }
+
+  private fun startColorAnimation() {
+    paintAnimator = ValueAnimator.ofObject(ArgbEvaluator(), colorFrom, colorTo)
+    paintAnimator.duration = 1000
+    paintAnimator.interpolator = AccelerateDecelerateInterpolator()
+    paintAnimator.addUpdateListener {
+      colorPaint = it.animatedValue as Int
+      postInvalidate()
+    }
+    paintAnimator.start()
   }
 
   private val Int.dp: Float
