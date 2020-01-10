@@ -12,7 +12,7 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    val chart = findViewById<PieChart>(R.id.chart)
+    val chart = findViewById<BarChart>(R.id.chart)
 
     chart.setOnClickListener {
       chart.startAnimation()

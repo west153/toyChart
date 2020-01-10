@@ -7,7 +7,7 @@
     android:keepScreenOn="true"
     tools:context=".MainActivity">
 
-  <com.example.toy.android.PieChart
+  <com.example.toy.android.BarChart
       android:id="@+id/chart"
       android:layout_width="0dp"
       android:layout_height="300dp"

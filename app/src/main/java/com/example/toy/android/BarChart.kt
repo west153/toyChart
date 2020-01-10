@@ -16,7 +16,7 @@ import android.view.animation.LinearInterpolator
 import com.example.toy.android.entity.Bar
 import com.example.toy.android.utils.EasingUtils
 
-class PieChart : View {
+class BarChart : View {
 
   var paddingLeft = 8.dp
   var paddingTop = 2.dp
