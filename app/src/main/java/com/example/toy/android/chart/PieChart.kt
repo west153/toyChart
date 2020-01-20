@@ -7,13 +7,18 @@ import android.graphics.Color
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.view.animation.LinearInterpolator
 import com.example.toy.android.entity.Pie
 import com.example.toy.android.utils.EasingUtils
 import com.example.toy.android.utils.TimeToValue
+import kotlin.math.abs
+import kotlin.math.acos
+import kotlin.math.pow
+import kotlin.math.sqrt
 
-class PieChart : View {
+class PieChart : View, View.OnTouchListener {
 
   private val startAngle = -90F
   private val pieList = arrayListOf<Pie>()
@@ -30,34 +35,33 @@ class PieChart : View {
 
   override fun onDraw(canvas: Canvas?) {
     super.onDraw(canvas)
-    val left = 0F
-    val right = height.toFloat()
+    val centerXOfCanvas = width / 2
+    val rectW = height.toFloat() / 2
+    val left = centerXOfCanvas - rectW
+    val right = centerXOfCanvas + rectW
     val top = 0F
     val bottom = height.toFloat()
     ovalRectF.set(left, top, right, bottom)
 
     for (index in (pieList.size - 1) downTo 0) {
-      val sweep = if (index == 0)
-        pieList[index].sweepAngle
+
+      pieList[index].sweepAngle = if (index == 0)
+        pieList[index].endAngle
       else
-        pieList[index].sweepAngle + (index - index until index).map { pieList[it].sweepAngle }.sum()
+        pieList[index].endAngle + (index - index until index).map { pieList[it].endAngle }.sum()
 
       canvas?.drawArc(
         ovalRectF,
         startAngle,
-        sweep * pieList[index].progress,
+        pieList[index].sweepAngle * pieList[index].progress,
         true,
         pieList[index].backgroundPaint
       )
-
-      if (index == 1) {
-        Log.d("chart", "${pieList[index].progress}, $sweep")
-      }
     }
-
   }
 
   private fun init() {
+    setOnTouchListener(this)
     animator = ValueAnimator.ofFloat(0F, 1F)
     animator.duration = 1000
     animator.interpolator = LinearInterpolator()
@@ -78,14 +82,15 @@ class PieChart : View {
       pieList.clear()
     }
 
-    data.forEachIndexed { index, number ->
+    for (i in data.indices) {
       val pie = Pie().apply {
-        setValue(data.sum(), number)
-        startAngle = when (index) {
-          0 -> this@PieChart.startAngle
-          else -> pieList[index - 1].startAngle + pieList[index - 1].sweepAngle
+        setValue(data.sum(), data[i])
+        startAngle = when (i == 0) {
+          true -> this@PieChart.startAngle
+          else -> pieList[i - 1].startAngle + pieList[i - 1].endAngle
         }
-        setBackGround(colorArray[index])
+        endAngle = (data[i] / data.sum()) * 360
+        setBackGround(colorArray[i])
       }
       pieList.add(pie)
     }
@@ -97,4 +102,57 @@ class PieChart : View {
     postInvalidate()
     animator.start()
   }
+
+  override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+    if (event?.action == MotionEvent.ACTION_UP) {
+      return touchToPie(event.x, event.y)
+    }
+    return true
+  }
+
+  private fun touchToPie(x: Float, y: Float): Boolean {
+    val centerX = ovalRectF.centerX()
+    val centerY = ovalRectF.centerY()
+    val radius = (ovalRectF.top + ovalRectF.bottom) / 2
+
+    // sqrt((x2 - x1)^2 + (y2 - y1)^2)
+    val pointX = abs(centerX - x)
+    val pointY = abs(centerY - y)
+    val touchDistanceToCenter = sqrt(pointX.pow(2F) + pointY.pow(2F))
+    val isTouchPie = radius > touchDistanceToCenter
+
+    return if (isTouchPie) {
+      val horizontalDirection = centerX < x // true : right, false: left
+      val verticalDirection = centerY < y // true: bottom, false: top
+
+      val degree = if (horizontalDirection && !verticalDirection) {
+        //degree 0 ~ 90
+        Math.toDegrees(acos(pointY / touchDistanceToCenter).toDouble())
+      } else if (horizontalDirection && verticalDirection) {
+        //degree 90 ~ 180
+        Math.toDegrees(acos(pointX / touchDistanceToCenter).toDouble()) + 90
+      } else if (!horizontalDirection && verticalDirection) {
+        //degree 180 ~ 270
+        Math.toDegrees(acos(pointY / touchDistanceToCenter).toDouble()) + 180
+      } else {
+        //degree 270~ 360
+        Math.toDegrees(acos(pointX / touchDistanceToCenter).toDouble()) + 270
+      }
+      return containsPie(degree)
+    } else
+      false
+  }
+
+  private fun containsPie(degree: Double): Boolean {
+    for (i in pieList.indices) {
+      val pie = pieList[i]
+      val startAngle = pie.startAngle + 90F
+      if (degree in startAngle..pie.sweepAngle) {
+        Log.d("touchPie", "index:$i, degree:$degree, sweepAngle:${pie.sweepAngle}")
+        return true
+      }
+    }
+    return false
+  }
+
 }

@@ -7,6 +7,7 @@ import com.example.toy.android.utils.dp
 class Pie {
 
   var startAngle = 0F
+  var endAngle = 0F
   var sweepAngle = 0F
 
   private var totalValue: Float = 0F
@@ -17,7 +18,6 @@ class Pie {
     this.color = Color.RED
     this.strokeWidth = 1.dp
     this.style = Paint.Style.FILL
-    this.alpha = 150
   }
 
   val strokePaint
@@ -30,8 +30,8 @@ class Pie {
   fun setValue(total: Float, value: Float) {
     this.totalValue = total
     this.value = value
-    this.sweepAngle = ((value / totalValue) * 360)
   }
+
 
   fun setBackGround(res: Int) {
     backgroundPaint.color = res

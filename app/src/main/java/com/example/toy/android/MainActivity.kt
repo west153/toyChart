@@ -14,10 +14,7 @@ class MainActivity : AppCompatActivity() {
 
     val chart2 = findViewById<PieChart>(R.id.chart2)
     chart2.setData(arrayListOf(160F, 80F, 75F, 5F, 80F))
-
-    chart2.setOnClickListener {
-      chart2.startAnimation()
-    }
+    chart2.startAnimation()
   }
 
 }
